@@ -64,21 +64,8 @@ def get_stock_data(ticker, start_date, end_date, indicators, agent):
 
         st.plotly_chart(fig)
 
-        with st.spinner("Writing " + ticker + " Candlestick Chart with Technical Indicators to disk, please wait..."):
-
-            png_renderer = pio.renderers["png"]
-            png_renderer.width = 1024
-            png_renderer.height = 768
-            pio.renderers.default = "png"
-
-            graph_file = "analysis_results_" + ticker + ".png"
-
-            # Save chart as a temporary image
-            fig.write_image(graph_file, "png")
-
-            # Read image and encode to Base64
-            with open(graph_file, "rb") as image_file:
-                image_data = base64.b64encode(image_file.read()).decode('utf-8')
+        # Save the chart as an image
+        image_data= fig.to_image(format="png")
 
         with st.spinner("Searching and interpreting news articles using " + agent  + ", please wait..."):
 
