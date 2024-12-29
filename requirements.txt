@@ -2,7 +2,8 @@ kaleido==0.1.0.post1
 plotly==5.24.1
 yfinance==0.2.40
 google-generativeai
-ollama
+openai
 phidata
 googlesearch-python
 pycountry
+streamlit
