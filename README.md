@@ -19,33 +19,21 @@ Python application that generates AI-powered technical analysis for cryptocurren
 
 1. Clone repository
 ```sh
-git clone https://github.com/psylsph/ai-crypto-apps
+git clone https://github.com/psylsph/ai_stocks_technical_analysis
 ```
 2. Install packages:
 ```sh
-cd ai_technical_analysis
 python -m venv .venv
 .venv\Scripts\activate
+python.exe -m pip install --upgrade pip
 pip install -r requirements.txt
+setx GOOGLE_API_KEY <Your Google API Key>
 ```
-3. Install Ollama with LLaMA 3.2 Vision
-
-## Install Ollama
-
-1. Download and install via https://ollama.com/download
-2. `ollama pull llama3.2-vision`
-
 ## Usage
 
-### Run analysis:
-
-Enter tickers when prompted (e.g., "BTC-USD, ETH-USD")
-
-## Output
-### Generated files:
-
-* analysis_results_<TICKER>.png - Chart
-* analysis_results_<TICKER>.md - Analysis
+```sh
+streamlit run .\ai_stocks_technical_analysis.py
+```
 
 ## Credits
 Based on [@DeepCharts](https://github.com/deepcharts)
