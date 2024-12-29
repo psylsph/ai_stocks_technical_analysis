@@ -125,7 +125,7 @@ indicators = st.sidebar.multiselect(
 )
 
 st.sidebar.subheader("Analysis AI Agent")
-agent = st.sidebar.selectbox("Select AI Agent:", options=["gemini-1.5-flash", "gemini-2.0-flash-exp"], index=1)
+agent = st.sidebar.selectbox("Select AI Agent:", options=["gemini-1.5-pro", "gemini-2.0-flash-exp"], index=1)
 
 # Fetch stock data
 if st.sidebar.button("Fetch Data"):
