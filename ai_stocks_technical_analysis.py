@@ -1,11 +1,9 @@
-## Source: Baed on work by @DeepCharts Youtube Channel (https://www.youtube.com/@DeepCharts)
+## Source: Based on work by @DeepCharts Youtube Channel (https://www.youtube.com/@DeepCharts)
 
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.io as pio
 import google.generativeai as genai
-import base64
 from datetime import datetime
 from phi.agent import Agent
 from phi.model.google import Gemini
@@ -127,10 +125,8 @@ indicators = st.sidebar.multiselect(
 )
 
 st.sidebar.subheader("Analysis AI Agent")
-#agent = st.sidebar.text_input("Enter AI Agent (e.g., gemini-1.5-flash, gemini-2.0-flash-exp):", value='gemini-2.0-flash-exp')
 agent = st.sidebar.selectbox("Select AI Agent:", options=["gemini-1.5-flash", "gemini-2.0-flash-exp"], index=1)
 
-# Fetch stock data
 # Fetch stock data
 if st.sidebar.button("Fetch Data"):
     get_stock_data(ticker, start_date, end_date, indicators, agent)

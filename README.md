@@ -27,7 +27,11 @@ python -m venv .venv
 .venv\Scripts\activate
 python.exe -m pip install --upgrade pip
 pip install --no-cache-dir -r requirements.txt
+pip install --no-cache-dir kaleido==0.1.0.post1 # force install this version on Windows OS
 ```
+
+
+
 ## Usage
 
 ```sh
