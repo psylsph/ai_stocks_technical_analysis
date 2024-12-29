@@ -27,11 +27,11 @@ python -m venv .venv
 .venv\Scripts\activate
 python.exe -m pip install --upgrade pip
 pip install -r requirements.txt
-setx GOOGLE_API_KEY <Your Google API Key>
 ```
 ## Usage
 
 ```sh
+set GOOGLE_API_KEY=<Your Google API Key>
 streamlit run .\ai_stocks_technical_analysis.py
 ```
 
