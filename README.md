@@ -26,7 +26,7 @@ git clone https://github.com/psylsph/ai_stocks_technical_analysis
 python -m venv .venv
 .venv\Scripts\activate
 python.exe -m pip install --upgrade pip
-pip install -r requirements.txt
+pip install --no-cache-dir -r requirements.txt
 ```
 ## Usage
 

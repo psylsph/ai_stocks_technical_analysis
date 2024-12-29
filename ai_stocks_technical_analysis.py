@@ -8,7 +8,6 @@ import google.generativeai as genai
 import base64
 from datetime import datetime
 from phi.agent import Agent
-from phi.model.ollama import Ollama
 from phi.model.google import Gemini
 from phi.tools.googlesearch import GoogleSearch
 import streamlit as st
