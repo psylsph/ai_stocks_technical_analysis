@@ -91,7 +91,7 @@ def get_stock_data(ticker, start_date, end_date, indicators, agent):
 
         with st.spinner("Analyzing the sentiment and stock chart's technical indicators, please wait..."):
 
-            GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyBud2LfN_RDdqpWGrlfwnR7Ya86Jo32Iag")
+            GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
             genai.configure(api_key=GOOGLE_API_KEY)
             model = genai.GenerativeModel(agent)
             content = "You are a Stock Trader specializing in Technical Analysis at a top financial institution. \n\n" + \
