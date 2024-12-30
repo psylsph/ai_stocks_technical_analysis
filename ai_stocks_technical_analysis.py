@@ -18,7 +18,7 @@ def get_stock_data(ticker, start_date, end_date, indicators, agent):
     stock_data = yf.download(ticker, start=start_date, end=end_date)
 
     # Check if data is available
-    if  not stock_data.empty:
+    if not stock_data.empty:
 
         data = stock_data
 
@@ -104,7 +104,8 @@ def get_stock_data(ticker, start_date, end_date, indicators, agent):
             st.markdown("\n---\n")
             st.markdown("#### Details of the Sentiment Analysis")
             st.markdown( sentiment_agent_response)
-
+    else:
+        st.markdown(ticker + " does not have pricing information available, for crypto tring adding ***-USD***")
 
 # Set up Streamlit app
 st.set_page_config(layout="wide")
@@ -129,5 +130,5 @@ agent = st.sidebar.selectbox("Select AI Agent:", options=["gemini-1.5-pro", "gem
 
 # Fetch stock data
 if st.sidebar.button("Fetch Data"):
-    get_stock_data(ticker, start_date, end_date, indicators, agent)
+    get_stock_data(ticker.upper().strip(), start_date, end_date, indicators, agent)
             
