@@ -8,6 +8,7 @@ from google import genai
 from phi.agent import Agent
 from phi.model.google import Gemini
 from phi.tools.googlesearch import GoogleSearch
+
 import streamlit as st
 import os
 
@@ -77,7 +78,7 @@ def get_stock_data(ticker, start_date, end_date, indicators, model):
                 name="Sentiment Agent",
                 role="Search and interpret news articles.",
                 model=Gemini(id=model),
-                tools=[GoogleSearch()],
+                tools=[GoogleSearch(timeout=30)],
                 instructions=[
                     "Find relevant news articles for " + ticker + " and analyze the sentiment.",
                     "Provide sentiment scores from 1 (negative) to 10 (positive) with reasoning and sources."
@@ -91,7 +92,7 @@ def get_stock_data(ticker, start_date, end_date, indicators, model):
             for delta in sentiment_agent.run(
                 "Analyze the sentiment for the following " + ticker + " during the previous 6 months.\n\n" +
                 "1. **Sentiment Analysis**: Search for relevant news articles and interpret the sentiment for each stock. Provide sentiment scores on a scale of 1 to 10, explain your reasoning, and cite your sources.\n\n" +
-                "Ensure your response is accurate, comprehensive, and includes references to sources with publication dates, weighting the response to the last 3 months information.", stream=True):
+                "Ensure your response is accurate, comprehensive, and includes references to sources with publication dates, weighting the response to the last months information.", stream=True):
                 sentiment_agent_response += delta.get_content_as_string()
             st.markdown("## Sentiment Analysis Results")
             st.markdown( sentiment_agent_response, unsafe_allow_html=True)
@@ -127,7 +128,7 @@ st.sidebar.header("Configuration")
 
 # Input for stock ticker and date range
 ticker = st.sidebar.text_input("Enter Stock / Crypto Ticker (e.g., DJT, BA.L, BTC-USD):", value='BA.L')
-start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime(datetime.now().date()-pd.DateOffset(months=6)))
+start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime(datetime.now().date()-pd.DateOffset(months=3)))
 end_date = st.sidebar.date_input("End Date", value=pd.to_datetime(datetime.now().date()-pd.DateOffset(days=1)))
 
 # Sidebar: Select technical indicators
@@ -143,7 +144,8 @@ try:
     if GOOGLE_API_KEY:
         client = genai.Client(api_key=GOOGLE_API_KEY)
         st.sidebar.subheader("Analysis AI Agent")
-        model = st.sidebar.selectbox("Select AI Agent:", options=["gemini-2.5-pro-exp-03-25", "gemini-2.5-flash-preview-04-17"], index=0)
+        model = st.sidebar.selectbox("Select AI Agent:", options=["gemini-2.5-pro-exp-03-25", "gemini-2.5-flash-preview-04-17",
+                                                                  "gemini-2.0-flash", "gemini-2.0-flash-lite"], index=1)
     else:
         st.sidebar.warning("Google API key not found - sentiment analysis disabled")
         model = None
