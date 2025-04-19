@@ -1,21 +1,22 @@
 ## Source: Based on work by @DeepCharts Youtube Channel (https://www.youtube.com/@DeepCharts)
 
-import yfinance as yf
+import yfinance
 import pandas as pd
 import plotly.graph_objects as go
-import google.generativeai as genai
 from datetime import datetime
+from google import genai
 from phi.agent import Agent
 from phi.model.google import Gemini
 from phi.tools.googlesearch import GoogleSearch
 import streamlit as st
 import os
 
-def get_stock_data(ticker, start_date, end_date, indicators, agent):
+def get_stock_data(ticker, start_date, end_date, indicators, model):
     ticker = ticker.strip()
 
     # Fetch stock data
-    stock_data = yf.download(ticker, start=start_date, end=end_date)
+    stock_data = yfinance.download(ticker, start=start_date, end=end_date, ignore_tz=False,auto_adjust=True,
+                                   back_adjust=True, threads=True, rounding=True, multi_level_index=False)
 
     # Check if data is available
     if not stock_data.empty:
@@ -36,17 +37,17 @@ def get_stock_data(ticker, start_date, end_date, indicators, agent):
 
         # Helper function to add indicators to the chart
         def add_indicator(indicator):
+            sma = data['Close'].rolling(window=20).mean()
+            ema = data['Close'].ewm(span=20).mean()
+            std = data['Close'].rolling(window=20).std()
+            bb_upper = sma + 2 * std
+            bb_lower = sma - 2 * std
+
             if indicator == "20-Day SMA":
-                sma = data['Close'].rolling(window=20).mean()
                 fig.add_trace(go.Scatter(x=data.index, y=sma, mode='lines', name='SMA (20)'))
             elif indicator == "20-Day EMA":
-                ema = data['Close'].ewm(span=20).mean()
                 fig.add_trace(go.Scatter(x=data.index, y=ema, mode='lines', name='EMA (20)'))
             elif indicator == "20-Day Bollinger Bands":
-                sma = data['Close'].rolling(window=20).mean()
-                std = data['Close'].rolling(window=20).std()
-                bb_upper = sma + 2 * std
-                bb_lower = sma - 2 * std
                 fig.add_trace(go.Scatter(x=data.index, y=bb_upper, mode='lines', name='BB Upper'))
                 fig.add_trace(go.Scatter(x=data.index, y=bb_lower, mode='lines', name='BB Lower'))
             elif indicator == "VWAP":
@@ -59,19 +60,23 @@ def get_stock_data(ticker, start_date, end_date, indicators, agent):
 
         fig.update_layout(xaxis_rangeslider_visible=False)
         fig.update_layout(title=ticker + " Candlestick Chart with Technical Indicators")
+        fig.update_layout(height=int(600))
 
         st.plotly_chart(fig)
 
         # Save the chart as an image
         image_data= fig.to_image(format="png")
 
-        with st.spinner("Searching and interpreting news articles using " + agent  + ", please wait..."):
+        if model is None:
+            st.stop()
+
+        with st.spinner("Searching and interpreting news articles using " + model  + ", please wait..."):
 
             # Sentiment Agent
             sentiment_agent = Agent(
                 name="Sentiment Agent",
                 role="Search and interpret news articles.",
-                model=Gemini(id=agent),
+                model=Gemini(id=model),
                 tools=[GoogleSearch()],
                 instructions=[
                     "Find relevant news articles for " + ticker + " and analyze the sentiment.",
@@ -84,28 +89,36 @@ def get_stock_data(ticker, start_date, end_date, indicators, agent):
 
             sentiment_agent_response = ""
             for delta in sentiment_agent.run(
-                "Analyze the sentiment for the following " + ticker + " during the previous 12 months.\n\n" +
+                "Analyze the sentiment for the following " + ticker + " during the previous 6 months.\n\n" +
                 "1. **Sentiment Analysis**: Search for relevant news articles and interpret the sentiment for each stock. Provide sentiment scores on a scale of 1 to 10, explain your reasoning, and cite your sources.\n\n" +
-                "Ensure your response is accurate, comprehensive, and includes references to sources with publication dates, weighting the response to the last 6 months information.", stream=True):
+                "Ensure your response is accurate, comprehensive, and includes references to sources with publication dates, weighting the response to the last 3 months information.", stream=True):
                 sentiment_agent_response += delta.get_content_as_string()
+            st.markdown("## Sentiment Analysis Results")
+            st.markdown( sentiment_agent_response, unsafe_allow_html=True)
 
         with st.spinner("Analyzing the sentiment and stock chart's technical indicators, please wait..."):
 
-            GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-            genai.configure(api_key=GOOGLE_API_KEY)
-            model = genai.GenerativeModel(agent)
             content = "You are a Stock Trader specializing in Technical Analysis at a top financial institution. \n\n" + \
                             "Analyze the stock chart's technical indicators and the Sentiment Analysis then provide a buy/hold/sell recommendation. \n\n" + \
                             "Base your recommendation only on the candlestick chart, the displayed technical indicators and the Sentiment Analysis \n\n" + \
                             "First, provide the recommendation, then, provide your detailed reasoning." +  "\n\n"
-            full_analysis_response = model.generate_content([{'mime_type':'image/png', 'data': image_data}, sentiment_agent_response, content])
-            st.markdown("#### Sentiment and Stock Chart Technical Indicators Analysis Results")
+            full_analysis_response = client.models.generate_content(
+                model=model,
+                contents=[
+                    {
+                        "parts": [
+                            {"inline_data": {"mime_type": "image/png", "data": image_data}},
+                            {"text": sentiment_agent_response},
+                            {"text": content}
+                        ]
+                    }
+                ]
+            )
+            st.markdown("## Sentiment and Stock Chart Technical Indicators Analysis Results")
             st.markdown(full_analysis_response.text)
-            st.markdown("\n---\n")
-            st.markdown("#### Details of the Sentiment Analysis")
-            st.markdown( sentiment_agent_response)
+
     else:
-        st.markdown(ticker + " does not have pricing information available, for crypto tring adding ***-USD***")
+        st.markdown(ticker + " does not have pricing information available, for crypto try adding ***-USD***")
 
 # Set up Streamlit app
 st.set_page_config(layout="wide")
@@ -114,7 +127,7 @@ st.sidebar.header("Configuration")
 
 # Input for stock ticker and date range
 ticker = st.sidebar.text_input("Enter Stock / Crypto Ticker (e.g., DJT, BA.L, BTC-USD):", value='BA.L')
-start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime(datetime.now().date()-pd.DateOffset(months=12)))
+start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime(datetime.now().date()-pd.DateOffset(months=6)))
 end_date = st.sidebar.date_input("End Date", value=pd.to_datetime(datetime.now().date()-pd.DateOffset(days=1)))
 
 # Sidebar: Select technical indicators
@@ -125,10 +138,20 @@ indicators = st.sidebar.multiselect(
     default=["20-Day SMA", "20-Day EMA", "20-Day Bollinger Bands"]
 )
 
-st.sidebar.subheader("Analysis AI Agent")
-agent = st.sidebar.selectbox("Select AI Agent:", options=["gemini-1.5-pro", "gemini-2.0-flash-exp"], index=1)
+try:
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+    if GOOGLE_API_KEY:
+        client = genai.Client(api_key=GOOGLE_API_KEY)
+        st.sidebar.subheader("Analysis AI Agent")
+        model = st.sidebar.selectbox("Select AI Agent:", options=["gemini-2.5-pro-exp-03-25", "gemini-2.5-flash-preview-04-17"], index=0)
+    else:
+        st.sidebar.warning("Google API key not found - sentiment analysis disabled")
+        model = None
+except Exception as e:
+    st.sidebar.warning(f"Google API initialization failed: {str(e)}")
+    model = None
 
 # Fetch stock data
 if st.sidebar.button("Fetch Data"):
-    get_stock_data(ticker.upper().strip(), start_date, end_date, indicators, agent)
+    get_stock_data(ticker.upper().strip(), start_date, end_date, indicators, model)
             
