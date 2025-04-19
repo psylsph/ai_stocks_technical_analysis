@@ -90,7 +90,7 @@ def get_stock_data(ticker, start_date, end_date, indicators, model):
                 name="Sentiment Agent",
                 role="Search and interpret news articles.",
                 model=Gemini(id=model),
-                tools=[GoogleSearch(timeout=30)],
+                tools=[GoogleSearch(timeout=60)],
                 instructions=[
                     "Find relevant news articles for " + ticker + " and analyze the sentiment.",
                     "Provide sentiment scores from 1 (negative) to 10 (positive) with reasoning and sources."
